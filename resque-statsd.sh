@@ -69,7 +69,8 @@ main() {
 
 }
 
-test -e ./config.sh && source config.sh
+readonly configPath=$1
+test "$configPath" != "" && test -e $configPath && source $configPath
 
 echo $STATSD_HOST
 echo $REDIS_HOST
