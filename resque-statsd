@@ -2,6 +2,14 @@
 
 set -e
 
+readonly SCRIPT_NAME="$(basename $0)"
+readonly CONFIG_PATH=$1
+test "$CONFIG_PATH" != "" && test -e $CONFIG_PATH && source $CONFIG_PATH
+
+log() {
+  logger -s -t $SCRIPT_NAME --  $*
+}
+
 redisComand() {
   local host="$1"
   shift
@@ -18,7 +26,11 @@ redisComand() {
 }
 
 redis() {
-  redisComand "$REDIS_HOST" "$REDIS_PORT" "$REDIS_PASSWORD" $*
+  redisComand \
+    "${REDIS_HOST:-localhost}" \
+    "${REDIS_PORT:-6379}" \
+    "$REDIS_PASSWORD" \
+    $*
 }
 
 getQueues() {
@@ -31,11 +43,15 @@ getQueueSize() {
 }
 
 getFailedCount() {
-  redis LLEN resque:failed | awk '{ print $1 }'
-
+  count=$(redis LLEN resque:failed | awk '{ print $1 }')
+  if [[ "$count" = "" ]] ; then
+    echo 0
+  else
+    echo $count
+  fi
 }
 
-reportToStasd() {
+reportToStatsd() {
   local host="$1"
   shift
   local env="$1"
@@ -46,33 +62,30 @@ reportToStasd() {
 
   if [[ "$queue$value" != "" ]] ; then
     local payload="resque.${env}.${queue}:$value|c"
-    echo $payload | nc -w -u $host 8125
+    log $payload
+    echo $payload | nc -w 1 -u $host 8125
   fi
 }
 
-toStasd() {
-  reportToStasd "$STATSD_HOST" "$STATSD_ENV" $1 $2
+report() {
+  reportToStatsd \
+    "${STATSD_HOST:-localhost}" \
+    "${STATSD_ENV:-development}" \
+    $1 $2
 }
 
 main() {
   for queue in $(getQueues) ; do
+    log $queue
     local val=$(getQueueSize $queue)
-    echo "$queue -> $val"
-    toStatsd "$queue" "$val"
+    log "$queue -> $val"
+    report "$queue" "$val"
   done
 
-
-  redis LLEN resque:failed
-  getFailedCount
-  echo getFailedCount
-  echo "Failed -> ${getFailedCount}"
+  failed=$(getFailedCount)
+  log "Failed -> $failed"
+  report "failed" $failed
 
 }
-
-readonly configPath=$1
-test "$configPath" != "" && test -e $configPath && source $configPath
-
-echo $STATSD_HOST
-echo $REDIS_HOST
 
 main
