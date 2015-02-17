@@ -1,6 +1,5 @@
-STATSD_HOST=statsd.test.dev
-STATSD_ENV=production
-
-REDIS_HOST=redis.test.dev
-REDIS_PORT=6379
-REDIS_PASSWORD=foobar
+export STATSD_HOST=statsd.test.dev
+export STATSD_ENV=production
+export REDIS_HOST=redis.test.dev
+export REDIS_PORT=6379
+export REDIS_PASSWORD=foobar
