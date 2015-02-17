@@ -63,8 +63,8 @@ reportToStatsd() {
   shift
 
   if [[ "$queue$value" != "" ]] ; then
-    local payload="resque.${env}.${queue}:$value|g"
-    echo $payload | nc -w 0 -u $host 8125
+    local payload="resque.${env}.${queue}.gauge:$value|g"
+    echo $payload | nc -w 1 -u $host 8125
   fi
 }
 
