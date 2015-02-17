@@ -1,5 +1,5 @@
-
 #!/usr/bin/env bash
+
 set -e
 
 readonly SCRIPT_NAME="$(basename $0)"
@@ -16,8 +16,9 @@ redisComand() {
   local port="$1"
   shift
   local password="$1"
+  shift
 
-  if [[ "$password" != '' ]] ; then
+  if [[ "$password" != 'nopasswtf' ]] ; then
     local password_opt="-a $password"
   fi
 
@@ -29,7 +30,7 @@ redis() {
   redisComand \
     "${REDIS_HOST:-localhost}" \
     "${REDIS_PORT:-6379}" \
-    "$REDIS_PASSWORD" \
+    "${REDIS_PASSWORD:-nopasswtf}" \
     $*
 }
 
@@ -59,6 +60,7 @@ reportToStatsd() {
   local queue="$1"
   shift
   local value="$1"
+  shift
 
   if [[ "$queue$value" != "" ]] ; then
     local payload="resque.${env}.${queue}:$value|c"
@@ -88,6 +90,10 @@ main() {
 
 }
 
-while sleep 10 ; do
-  main
-done
+main
+
+if [[ "$REPORT_INTERVAL" != "" ]] ; then
+  while sleep $REPORT_INTERVAL ; do
+    main
+  done
+fi
