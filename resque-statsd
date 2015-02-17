@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
 
+#!/usr/bin/env bash
 set -e
 
 readonly SCRIPT_NAME="$(basename $0)"
@@ -63,7 +63,7 @@ reportToStatsd() {
   if [[ "$queue$value" != "" ]] ; then
     local payload="resque.${env}.${queue}:$value|c"
     log $payload
-    echo $payload | nc -w 1 -u $host 8125
+    echo $payload | nc -w 0 -u $host 8125
   fi
 }
 
@@ -88,4 +88,6 @@ main() {
 
 }
 
-main
+while sleep 10 ; do
+  main
+done
