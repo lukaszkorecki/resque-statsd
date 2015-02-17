@@ -64,8 +64,7 @@ reportToStatsd() {
 
   if [[ "$queue$value" != "" ]] ; then
     local payload="resque.${env}.${queue}:$value|c"
-    log $payload
-    echo $payload | nc -w 0 -u $host 8125
+    echo $payload | nc -w 1 -u $host 8125
   fi
 }
 
@@ -78,14 +77,13 @@ report() {
 
 main() {
   for queue in $(getQueues) ; do
-    log $queue
     local val=$(getQueueSize $queue)
     log "$queue -> $val"
     report "$queue" "$val"
   done
 
   failed=$(getFailedCount)
-  log "Failed -> $failed"
+  log "failed -> $failed"
   report "failed" $failed
 
 }
