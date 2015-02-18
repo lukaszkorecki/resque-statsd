@@ -23,7 +23,11 @@ redisComand() {
   fi
 
 
-  redis-cli -h $host $password_opt -p $port $*
+  # Ignore network or redis errors
+  set +e
+  result=$(redis-cli -h $host $password_opt -p $port $*)
+  set -e
+  printf "${result}\n"
 }
 
 redis() {
@@ -64,7 +68,11 @@ reportToStatsd() {
 
   if [[ "$queue$value" != "" ]] ; then
     local payload="resque.${env}.${queue}.gauge:$value|g"
+    # We have a wait time here to ensure that stuff works, but
+    # if the host is unreachable nc will stop working. Lets ignore that
+    set +e
     echo $payload | nc -w 1 -u $host 8125
+    set -e
   fi
 }
 
